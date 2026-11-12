@@ -1,0 +1,102 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.11.12324.101 stable
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.ApiGateway", "src\ApiGateway\Fundoo.ApiGateway\Fundoo.ApiGateway.csproj", "{E90FD3B7-BD0C-436A-B508-8AC3834D9712}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.User.Domain", "src\Services\User\Fundoo.User.Domain\Fundoo.User.Domain.csproj", "{D6BD69C5-23C8-4326-BD43-9CFCCD8CC78B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.User.Application", "src\Services\User\Fundoo.User.Application\Fundoo.User.Application.csproj", "{8D399385-6D64-484A-B331-AF9A4AA0445E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.User.Infrastructure", "src\Services\User\Fundoo.User.Infrastructure\Fundoo.User.Infrastructure.csproj", "{74417B09-40E3-4115-8F13-52312751D13B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.User.Api", "src\Services\User\Fundoo.User.Api\Fundoo.User.Api.csproj", "{1DFF6570-CA5E-4666-A4B7-EBA9DF18915D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Notes.Domain", "src\Services\Notes\Fundoo.Notes.Domain\Fundoo.Notes.Domain.csproj", "{4D287252-AD8A-4FFE-AB1A-2E364009C91D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Notes.Application", "src\Services\Notes\Fundoo.Notes.Application\Fundoo.Notes.Application.csproj", "{93677625-9507-4179-ADCF-2FA3910083C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Notes.Infrastructure", "src\Services\Notes\Fundoo.Notes.Infrastructure\Fundoo.Notes.Infrastructure.csproj", "{191C52A1-F691-4178-B1BF-27FE3C1AB86B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Notes.Api", "src\Services\Notes\Fundoo.Notes.Api\Fundoo.Notes.Api.csproj", "{AD3AC7B8-190D-4DFB-9111-A1E90935AF6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.User.UnitTests", "tests\Fundoo.User.UnitTests\Fundoo.User.UnitTests.csproj", "{6ABB6E8D-8E00-45E5-8361-48058B569D05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Notes.UnitTests", "tests\Fundoo.Notes.UnitTests\Fundoo.Notes.UnitTests.csproj", "{3DD972E8-B9BC-4E0C-9113-D772236728D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Email.Api", "src\Services\Email\Fundoo.Email.Api\Fundoo.Email.Api.csproj", "{C33B3E3C-E7FA-4157-8E24-0BCA29E09E8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Email.Application", "src\Services\Email\Fundoo.Email.Application\Fundoo.Email.Application.csproj", "{C5D6424A-6D56-46AF-90DA-0D5E34F20A11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fundoo.Email.Domain", "src\Services\Email\Fundoo.Email.Domain\Fundoo.Email.Domain.csproj", "{D70A2F77-8B0D-42D8-9B9D-7A7A1F0E91B2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E90FD3B7-BD0C-436A-B508-8AC3834D9712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E90FD3B7-BD0C-436A-B508-8AC3834D9712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E90FD3B7-BD0C-436A-B508-8AC3834D9712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E90FD3B7-BD0C-436A-B508-8AC3834D9712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6BD69C5-23C8-4326-BD43-9CFCCD8CC78B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6BD69C5-23C8-4326-BD43-9CFCCD8CC78B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6BD69C5-23C8-4326-BD43-9CFCCD8CC78B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6BD69C5-23C8-4326-BD43-9CFCCD8CC78B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D399385-6D64-484A-B331-AF9A4AA0445E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D399385-6D64-484A-B331-AF9A4AA0445E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D399385-6D64-484A-B331-AF9A4AA0445E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D399385-6D64-484A-B331-AF9A4AA0445E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74417B09-40E3-4115-8F13-52312751D13B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74417B09-40E3-4115-8F13-52312751D13B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74417B09-40E3-4115-8F13-52312751D13B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74417B09-40E3-4115-8F13-52312751D13B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DFF6570-CA5E-4666-A4B7-EBA9DF18915D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DFF6570-CA5E-4666-A4B7-EBA9DF18915D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DFF6570-CA5E-4666-A4B7-EBA9DF18915D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DFF6570-CA5E-4666-A4B7-EBA9DF18915D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D287252-AD8A-4FFE-AB1A-2E364009C91D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D287252-AD8A-4FFE-AB1A-2E364009C91D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D287252-AD8A-4FFE-AB1A-2E364009C91D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D287252-AD8A-4FFE-AB1A-2E364009C91D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93677625-9507-4179-ADCF-2FA3910083C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93677625-9507-4179-ADCF-2FA3910083C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93677625-9507-4179-ADCF-2FA3910083C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93677625-9507-4179-ADCF-2FA3910083C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{191C52A1-F691-4178-B1BF-27FE3C1AB86B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{191C52A1-F691-4178-B1BF-27FE3C1AB86B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{191C52A1-F691-4178-B1BF-27FE3C1AB86B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{191C52A1-F691-4178-B1BF-27FE3C1AB86B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD3AC7B8-190D-4DFB-9111-A1E90935AF6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD3AC7B8-190D-4DFB-9111-A1E90935AF6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD3AC7B8-190D-4DFB-9111-A1E90935AF6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD3AC7B8-190D-4DFB-9111-A1E90935AF6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6ABB6E8D-8E00-45E5-8361-48058B569D05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6ABB6E8D-8E00-45E5-8361-48058B569D05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6ABB6E8D-8E00-45E5-8361-48058B569D05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6ABB6E8D-8E00-45E5-8361-48058B569D05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DD972E8-B9BC-4E0C-9113-D772236728D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DD972E8-B9BC-4E0C-9113-D772236728D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DD972E8-B9BC-4E0C-9113-D772236728D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DD972E8-B9BC-4E0C-9113-D772236728D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C33B3E3C-E7FA-4157-8E24-0BCA29E09E8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C33B3E3C-E7FA-4157-8E24-0BCA29E09E8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C33B3E3C-E7FA-4157-8E24-0BCA29E09E8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C33B3E3C-E7FA-4157-8E24-0BCA29E09E8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5D6424A-6D56-46AF-90DA-0D5E34F20A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5D6424A-6D56-46AF-90DA-0D5E34F20A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5D6424A-6D56-46AF-90DA-0D5E34F20A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5D6424A-6D56-46AF-90DA-0D5E34F20A11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D70A2F77-8B0D-42D8-9B9D-7A7A1F0E91B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D70A2F77-8B0D-42D8-9B9D-7A7A1F0E91B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D70A2F77-8B0D-42D8-9B9D-7A7A1F0E91B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D70A2F77-8B0D-42D8-9B9D-7A7A1F0E91B2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {622E61C8-FD0A-4D75-B55D-4FBB51DBDDB3}
+	EndGlobalSection
+EndGlobal
