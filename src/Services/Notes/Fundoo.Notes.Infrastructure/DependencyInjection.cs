@@ -6,11 +6,33 @@ namespace Fundoo.Notes.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddNotesInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddNotesInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
+        var redisConnection =
+            configuration.GetConnectionString("Redis");
+
+        if (string.IsNullOrWhiteSpace(redisConnection))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings:Redis is not configured.");
+        }
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName = "Fundoo:";
+        });
+
         services.AddScoped<NotesRepository>();
-        services.AddScoped<INoteRepository>(provider => provider.GetRequiredService<NotesRepository>());
-        services.AddScoped<ILabelRepository>(provider => provider.GetRequiredService<NotesRepository>());
+
+        services.AddScoped<INoteRepository>(
+            provider => provider.GetRequiredService<NotesRepository>());
+
+        services.AddScoped<ILabelRepository>(
+            provider => provider.GetRequiredService<NotesRepository>());
+
         return services;
     }
 }

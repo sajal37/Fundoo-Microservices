@@ -11,4 +11,5 @@ public class AppUser
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    public string? GoogleSubject { get; set; }
 }

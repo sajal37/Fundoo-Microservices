@@ -10,6 +10,7 @@ public interface IUserRepository
     Task SaveAsync();
     Task AddResetTokenAsync(PasswordResetToken token);
     Task<PasswordResetToken?> GetResetTokenAsync(string tokenHash);
+    Task<AppUser?> GetByGoogleSubjectAsync(string googleSubject);
 }
 
 public interface IPasswordHasher

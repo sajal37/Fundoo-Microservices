@@ -6,6 +6,7 @@ using Fundoo.User.Domain;
 using Fundoo.User.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Http;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Fundoo.User.Api;
 
@@ -17,17 +18,20 @@ public class AuthController : ControllerBase
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _hasher;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITokenService _tokens;
 
     public AuthController(
         IAuthService auth,
         IUserRepository users,
         IPasswordHasher hasher,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITokenService tokens)
     {
         _auth = auth;
         _users = users;
         _hasher = hasher;
         _httpClientFactory = httpClientFactory;
+        _tokens = tokens;
     }
 
     [HttpPost("register")]
@@ -60,6 +64,112 @@ public class AuthController : ControllerBase
 
         if (token == null)
             return Unauthorized(new { message = "Invalid email or password." });
+
+        return Ok(new LoginResponse(token));
+    }
+
+    [HttpGet("google")]
+    public IActionResult GoogleLogin()
+    {
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = "/api/auth/google-callback"
+        };
+
+        return Challenge(properties, "Google");
+    }
+
+    [HttpGet("google-callback")]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var result = await HttpContext.AuthenticateAsync("External");
+
+        if (!result.Succeeded || result.Principal == null)
+        {
+            await HttpContext.SignOutAsync("External");
+
+            return Unauthorized(new
+            {
+                message = "Google authentication failed."
+            });
+        }
+
+        var principal = result.Principal;
+
+        var googleSubject = principal.FindFirst("sub")?.Value;
+        var email = principal.FindFirst("email")?.Value;
+        var emailVerified = principal.FindFirst("email_verified")?.Value;
+
+        if (string.IsNullOrWhiteSpace(googleSubject) ||
+            string.IsNullOrWhiteSpace(email) ||
+            !string.Equals(
+                emailVerified,
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            await HttpContext.SignOutAsync("External");
+
+            return Unauthorized(new
+            {
+                message = "Google email is missing or not verified."
+            });
+        }
+
+        var normalizedEmail = email.Trim().ToUpperInvariant();
+
+        var user = await _users.GetByGoogleSubjectAsync(googleSubject);
+
+        if (user == null)
+        {
+            user = await _users.GetByEmailAsync(normalizedEmail);
+
+            if (user == null)
+            {
+                user = new AppUser
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = principal.FindFirst("given_name")?.Value ?? "",
+                    LastName = principal.FindFirst("family_name")?.Value ?? "",
+                    Email = email.Trim(),
+                    NormalizedEmail = normalizedEmail,
+                    GoogleSubject = googleSubject,
+                    PasswordHash = _hasher.Hash(
+                        Convert.ToBase64String(
+                            RandomNumberGenerator.GetBytes(32))),
+                    CreatedAtUtc = DateTime.UtcNow,
+                    UpdatedAtUtc = DateTime.UtcNow
+                };
+
+                await _users.AddAsync(user);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(user.GoogleSubject) &&
+                    user.GoogleSubject != googleSubject)
+                {
+                    await HttpContext.SignOutAsync("External");
+
+                    return Conflict(new
+                    {
+                        message = "This account is linked to another Google account."
+                    });
+                }
+
+                user.GoogleSubject = googleSubject;
+                user.UpdatedAtUtc = DateTime.UtcNow;
+            }
+
+            await _users.SaveAsync();
+        }
+
+        await HttpContext.SignOutAsync("External");
+
+        if (!user.IsActive)
+        {
+            return Forbid();
+        }
+
+        var token = _tokens.CreateAccessToken(user);
 
         return Ok(new LoginResponse(token));
     }

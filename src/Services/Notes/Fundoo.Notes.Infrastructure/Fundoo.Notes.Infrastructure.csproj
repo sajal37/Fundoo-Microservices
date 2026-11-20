@@ -8,5 +8,6 @@
   <ProjectReference Include="../Fundoo.Notes.Application/Fundoo.Notes.Application.csproj" />
   <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
   <PackageReference Include="Npgsql" Version="8.0.6" />
+  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.34" />
   </ItemGroup>
   </Project>

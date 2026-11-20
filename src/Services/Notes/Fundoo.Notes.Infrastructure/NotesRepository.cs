@@ -2,34 +2,77 @@ using Fundoo.Notes.Application;
 using Fundoo.Notes.Domain;
 using Npgsql;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Fundoo.Notes.Infrastructure;
 
 public class NotesRepository : INoteRepository, ILabelRepository
 {
     private readonly string _connectionString;
+    private readonly IDistributedCache _cache;
 
-    public NotesRepository(IConfiguration configuration)
+    public NotesRepository(
+    IConfiguration configuration,
+    IDistributedCache cache)
     {
-        _connectionString = configuration.GetConnectionString("NotesDb")!;
+        _connectionString =
+            configuration.GetConnectionString("NotesDb")!;
+
+        _cache = cache;
     }
 
     private NpgsqlConnection CreateConnection() => new NpgsqlConnection(_connectionString);
 
     public async Task<List<Note>> GetNotesAsync(Guid userId, string category)
     {
+        var cacheKey = $"notes:{userId}:{category}";
+
+        var cachedNotes = await _cache.GetStringAsync(cacheKey);
+
+        if (cachedNotes != null)
+        {
+            return JsonSerializer.Deserialize<List<Note>>(cachedNotes)
+                ?? new List<Note>();
+        }
+
         var notes = new List<Note>();
+
         var sql = "SELECT * FROM notes WHERE user_id = @userId";
-        if (category == "active") sql += " AND is_archived = false AND is_trashed = false";
-        if (category == "archived") sql += " AND is_archived = true AND is_trashed = false";
-        if (category == "trash") sql += " AND is_trashed = true";
+
+        if (category == "active")
+            sql += " AND is_archived = false AND is_trashed = false";
+
+        if (category == "archived")
+            sql += " AND is_archived = true AND is_trashed = false";
+
+        if (category == "trash")
+            sql += " AND is_trashed = true";
+
         sql += " ORDER BY created_at_utc DESC";
+
         await using var connection = CreateConnection();
         await connection.OpenAsync();
+
         await using var command = new NpgsqlCommand(sql, connection);
+
         command.Parameters.AddWithValue("userId", userId);
+
         await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) notes.Add(ReadNote(reader));
+
+        while (await reader.ReadAsync())
+        {
+            notes.Add(ReadNote(reader));
+        }
+
+        await _cache.SetStringAsync(
+            cacheKey,
+            JsonSerializer.Serialize(notes),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+
         return notes;
     }
 
@@ -59,6 +102,7 @@ public class NotesRepository : INoteRepository, ILabelRepository
         command.Parameters.AddWithValue("created", note.CreatedAtUtc);
         command.Parameters.AddWithValue("updated", note.UpdatedAtUtc);
         await command.ExecuteNonQueryAsync();
+        await ClearNotesCacheAsync(note.UserId);
     }
 
     public async Task<bool> UpdateNoteAsync(Note note)
@@ -74,7 +118,14 @@ public class NotesRepository : INoteRepository, ILabelRepository
         command.Parameters.AddWithValue("updated", DateTime.UtcNow);
         command.Parameters.AddWithValue("id", note.Id);
         command.Parameters.AddWithValue("userId", note.UserId);
-        return await command.ExecuteNonQueryAsync() > 0;
+        var updated = await command.ExecuteNonQueryAsync() > 0;
+
+        if (updated)
+        {
+            await ClearNotesCacheAsync(note.UserId);
+        }
+
+        return updated;
     }
 
     public async Task<bool> DeleteNoteAsync(Guid userId, Guid id)
@@ -84,7 +135,14 @@ public class NotesRepository : INoteRepository, ILabelRepository
         await using var command = new NpgsqlCommand("DELETE FROM notes WHERE id=@id AND user_id=@userId AND is_trashed=true", connection);
         command.Parameters.AddWithValue("id", id);
         command.Parameters.AddWithValue("userId", userId);
-        return await command.ExecuteNonQueryAsync() > 0;
+        var deleted = await command.ExecuteNonQueryAsync() > 0;
+
+        if (deleted)
+        {
+            await ClearNotesCacheAsync(userId);
+        }
+
+        return deleted;
     }
 
     public async Task<bool> SetNoteStateAsync(Guid userId, Guid id, string action)
@@ -104,7 +162,14 @@ public class NotesRepository : INoteRepository, ILabelRepository
         command.Parameters.AddWithValue("updated", DateTime.UtcNow);
         command.Parameters.AddWithValue("id", id);
         command.Parameters.AddWithValue("userId", userId);
-        return await command.ExecuteNonQueryAsync() > 0;
+        var updated = await command.ExecuteNonQueryAsync() > 0;
+
+        if (updated)
+        {
+            await ClearNotesCacheAsync(userId);
+        }
+
+        return updated;
     }
 
     public async Task<List<Label>> GetLabelsAsync(Guid userId)
@@ -206,6 +271,12 @@ public class NotesRepository : INoteRepository, ILabelRepository
         return await command.ExecuteNonQueryAsync() > 0;
     }
 
+    private async Task ClearNotesCacheAsync(Guid userId)
+    {
+        await _cache.RemoveAsync($"notes:{userId}:active");
+        await _cache.RemoveAsync($"notes:{userId}:archived");
+        await _cache.RemoveAsync($"notes:{userId}:trash");
+    }
     private static Note ReadNote(NpgsqlDataReader reader) => new()
     {
         Id = reader.GetGuid(reader.GetOrdinal("id")),

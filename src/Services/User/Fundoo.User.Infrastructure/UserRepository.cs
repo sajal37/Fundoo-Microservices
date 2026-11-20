@@ -27,4 +27,7 @@ public class UserRepository : IUserRepository
 
     public Task<PasswordResetToken?> GetResetTokenAsync(string tokenHash) =>
         _db.PasswordResetTokens.FirstOrDefaultAsync(x => x.TokenHash == tokenHash && x.UsedAtUtc == null && x.ExpiresAtUtc > DateTime.UtcNow);
+
+    public Task<AppUser?> GetByGoogleSubjectAsync(string googleSubject) =>
+    _db.Users.FirstOrDefaultAsync(x => x.GoogleSubject == googleSubject);
 }

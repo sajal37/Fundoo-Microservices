@@ -16,5 +16,6 @@ public class UserDbContext : DbContext
         builder.Entity<AppUser>().Property(x => x.Email).HasMaxLength(256);
         builder.Entity<AppUser>().Property(x => x.NormalizedEmail).HasMaxLength(256);
         builder.Entity<PasswordResetToken>().HasIndex(x => x.TokenHash).IsUnique();
+        builder.Entity<AppUser>().HasIndex(x => x.GoogleSubject).IsUnique();
     }
 }

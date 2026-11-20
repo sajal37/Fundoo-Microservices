@@ -6,6 +6,9 @@ using Fundoo.User.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +38,14 @@ builder.Services.AddHttpClient("EmailService", client =>
 var jwt = builder.Configuration.GetSection("Jwt");
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+
+        options.DefaultChallengeScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -48,6 +58,52 @@ builder.Services
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwt["SigningKey"]!))
+        };
+    })
+    .AddCookie("External", options =>
+    {
+        options.Cookie.Name = "Fundoo.External";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        options.SlidingExpiration = false;
+    })
+    .AddOpenIdConnect("Google", options =>
+    {
+        options.SignInScheme = "External";
+
+        options.Authority = "https://accounts.google.com";
+
+        options.ClientId =
+            builder.Configuration["Google:ClientId"]!;
+
+        options.ClientSecret =
+            builder.Configuration["Google:ClientSecret"]!;
+
+        options.ResponseType = "code";
+        options.CallbackPath = "/api/auth/signin-google";
+        options.UsePkce = true;
+
+        options.MapInboundClaims = false;
+        options.GetClaimsFromUserInfoEndpoint = true;
+
+        options.Scope.Clear();
+        options.Scope.Add("openid");
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
+
+        options.ClaimActions.MapUniqueJsonKey(
+    "email_verified", "email_verified");
+
+        options.Events.OnRedirectToIdentityProvider = context =>
+        {
+            var callbackUrl =
+                builder.Configuration["Google:CallbackUrl"];
+
+            if (!string.IsNullOrWhiteSpace(callbackUrl))
+            {
+                context.ProtocolMessage.RedirectUri = callbackUrl;
+            }
+
+            return Task.CompletedTask;
         };
     });
 
