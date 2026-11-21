@@ -31,7 +31,8 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
-public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+public class ForgotPasswordRequestValidator
+    : AbstractValidator<ForgotPasswordRequest>
 {
     public ForgotPasswordRequestValidator()
     {
@@ -41,7 +42,8 @@ public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRe
     }
 }
 
-public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+public class ResetPasswordRequestValidator
+    : AbstractValidator<ResetPasswordRequest>
 {
     public ResetPasswordRequestValidator()
     {
@@ -50,5 +52,18 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
         RuleFor(x => x.Password)
             .NotEmpty()
             .MinimumLength(6);
+    }
+}
+
+public class VerifyTwoFactorRequestValidator
+    : AbstractValidator<VerifyTwoFactorRequest>
+{
+    public VerifyTwoFactorRequestValidator()
+    {
+        RuleFor(x => x.ChallengeId).NotEmpty();
+
+        RuleFor(x => x.Code)
+            .NotEmpty()
+            .Matches("^[0-9]{6}$");
     }
 }

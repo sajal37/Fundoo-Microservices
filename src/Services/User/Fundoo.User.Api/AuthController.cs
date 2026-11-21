@@ -1,12 +1,10 @@
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
-using System.Net.Http.Json;
 using Fundoo.User.Application;
 using Fundoo.User.Domain;
-using Fundoo.User.Infrastructure;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Http;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Fundoo.User.Api;
 
@@ -19,19 +17,22 @@ public class AuthController : ControllerBase
     private readonly IPasswordHasher _hasher;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ITokenService _tokens;
+    private readonly IConfiguration _configuration;
 
     public AuthController(
         IAuthService auth,
         IUserRepository users,
         IPasswordHasher hasher,
         IHttpClientFactory httpClientFactory,
-        ITokenService tokens)
+        ITokenService tokens,
+        IConfiguration configuration)
     {
         _auth = auth;
         _users = users;
         _hasher = hasher;
         _httpClientFactory = httpClientFactory;
         _tokens = tokens;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -60,12 +61,19 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var token = await _auth.LoginAsync(request.Email, request.Password);
+        var user = await _auth.AuthenticateAsync(
+            request.Email,
+            request.Password);
 
-        if (token == null)
-            return Unauthorized(new { message = "Invalid email or password." });
+        if (user == null)
+        {
+            return Unauthorized(new
+            {
+                message = "Invalid email or password."
+            });
+        }
 
-        return Ok(new LoginResponse(token));
+        return await SendTwoFactorCodeAsync(user);
     }
 
     [HttpGet("google")]
@@ -169,15 +177,48 @@ public class AuthController : ControllerBase
             return Forbid();
         }
 
+        return await SendTwoFactorCodeAsync(user);
+    }
+
+    [HttpPost("verify-two-factor")]
+    public async Task<IActionResult> VerifyTwoFactor(
+        VerifyTwoFactorRequest request)
+    {
+        var codeHash = HashTwoFactorCode(request.Code);
+
+        var userId = await _users.TryConsumeLoginOtpAsync(
+            request.ChallengeId,
+            codeHash);
+
+        if (userId == null)
+        {
+            return Unauthorized(new
+            {
+                message = "Invalid or expired verification code."
+            });
+        }
+
+        var user = await _users.GetByIdAsync(userId.Value);
+
+        if (user == null || !user.IsActive)
+        {
+            return Unauthorized(new
+            {
+                message = "User account is unavailable."
+            });
+        }
+
         var token = _tokens.CreateAccessToken(user);
 
         return Ok(new LoginResponse(token));
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    public async Task<IActionResult> ForgotPassword(
+        ForgotPasswordRequest request)
     {
         var normalizedEmail = request.Email.Trim().ToUpperInvariant();
+
         var user = await _users.GetByEmailAsync(normalizedEmail);
 
         if (user != null)
@@ -222,7 +263,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordRequest request)
     {
         var tokenHash = Convert.ToHexString(
             SHA256.HashData(Encoding.UTF8.GetBytes(request.Token)));
@@ -230,19 +272,137 @@ public class AuthController : ControllerBase
         var reset = await _users.GetResetTokenAsync(tokenHash);
 
         if (reset == null)
-            return BadRequest(new { message = "Invalid or expired reset token." });
+        {
+            return BadRequest(new
+            {
+                message = "Invalid or expired reset token."
+            });
+        }
 
         var user = await _users.GetByIdAsync(reset.UserId);
 
         if (user == null)
-            return BadRequest(new { message = "Invalid or expired reset token." });
+        {
+            return BadRequest(new
+            {
+                message = "Invalid or expired reset token."
+            });
+        }
 
         user.PasswordHash = _hasher.Hash(request.Password);
         user.UpdatedAtUtc = DateTime.UtcNow;
         reset.UsedAtUtc = DateTime.UtcNow;
 
+        await _users.InvalidateLoginOtpsAsync(user.Id);
         await _users.SaveAsync();
 
-        return Ok(new { message = "Password has been reset." });
+        return Ok(new
+        {
+            message = "Password has been reset."
+        });
+    }
+
+    private async Task<IActionResult> SendTwoFactorCodeAsync(AppUser user)
+    {
+        var now = DateTime.UtcNow;
+
+        var latestCodeTime =
+            await _users.GetLatestLoginOtpCreatedAtAsync(user.Id);
+
+        if (latestCodeTime.HasValue &&
+            now - latestCodeTime.Value < TimeSpan.FromSeconds(30))
+        {
+            return StatusCode(429, new
+            {
+                message = "A code was recently sent. Wait 30 seconds before trying again."
+            });
+        }
+
+        await _users.InvalidateLoginOtpsAsync(user.Id);
+
+        var code = RandomNumberGenerator
+            .GetInt32(0, 1_000_000)
+            .ToString("D6");
+
+        var otp = new LoginOtp
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            CodeHash = HashTwoFactorCode(code),
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(5)
+        };
+
+        await _users.AddLoginOtpAsync(otp);
+        await _users.SaveAsync();
+
+        var emailClient =
+            _httpClientFactory.CreateClient("EmailService");
+
+        try
+        {
+            using var response = await emailClient.PostAsJsonAsync(
+                "api/email/send",
+                new
+                {
+                    Email = user.Email,
+                    Subject = "Fundoo login verification code",
+                    Body = $"<p>Your Fundoo login code is <strong>{code}</strong>.</p>" +
+                           "<p>This code expires in five minutes. Do not share it.</p>"
+                });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await _users.InvalidateLoginOtpsAsync(user.Id);
+
+                return StatusCode(502, new
+                {
+                    message = "The verification email could not be sent."
+                });
+            }
+        }
+        catch (HttpRequestException)
+        {
+            await _users.InvalidateLoginOtpsAsync(user.Id);
+
+            return StatusCode(502, new
+            {
+                message = "The verification email service is unavailable."
+            });
+        }
+        catch (TaskCanceledException)
+        {
+            await _users.InvalidateLoginOtpsAsync(user.Id);
+
+            return StatusCode(502, new
+            {
+                message = "The verification email service timed out."
+            });
+        }
+
+        return Accepted(new
+        {
+            message = "A verification code was sent to your email address.",
+            challengeId = otp.Id,
+            expiresInMinutes = 5,
+            resendAfterSeconds = 30
+        });
+    }
+
+    private string HashTwoFactorCode(string code)
+    {
+        var signingKey = _configuration["Jwt:SigningKey"];
+
+        if (string.IsNullOrWhiteSpace(signingKey))
+        {
+            throw new InvalidOperationException(
+                "Jwt:SigningKey is not configured.");
+        }
+
+        var keyBytes = Encoding.UTF8.GetBytes(signingKey);
+        var codeBytes = Encoding.UTF8.GetBytes("Fundoo:LoginOtp:" + code);
+
+        return Convert.ToHexString(
+            HMACSHA256.HashData(keyBytes, codeBytes));
     }
 }

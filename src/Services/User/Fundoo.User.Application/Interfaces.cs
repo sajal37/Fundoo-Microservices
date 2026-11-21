@@ -11,6 +11,10 @@ public interface IUserRepository
     Task AddResetTokenAsync(PasswordResetToken token);
     Task<PasswordResetToken?> GetResetTokenAsync(string tokenHash);
     Task<AppUser?> GetByGoogleSubjectAsync(string googleSubject);
+    Task<DateTime?> GetLatestLoginOtpCreatedAtAsync(Guid userId);
+    Task InvalidateLoginOtpsAsync(Guid userId);
+    Task AddLoginOtpAsync(LoginOtp otp);
+    Task<Guid?> TryConsumeLoginOtpAsync(Guid challengeId, string codeHash);
 }
 
 public interface IPasswordHasher
@@ -26,6 +30,11 @@ public interface ITokenService
 
 public interface IAuthService
 {
-    Task<Guid> RegisterAsync(string firstName, string lastName, string email, string password);
-    Task<string?> LoginAsync(string email, string password);
+    Task<Guid> RegisterAsync(
+        string firstName,
+        string lastName,
+        string email,
+        string password);
+
+    Task<AppUser?> AuthenticateAsync(string email, string password);
 }

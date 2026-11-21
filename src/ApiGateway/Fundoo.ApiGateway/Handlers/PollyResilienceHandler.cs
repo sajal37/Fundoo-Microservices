@@ -1,4 +1,5 @@
-﻿using Polly;
+﻿
+using Polly;
 using Polly.Retry;
 
 namespace Fundoo.ApiGateway.Handlers;
@@ -29,7 +30,7 @@ public class PollyResilienceHandler : DelegatingHandler
 
     private static readonly ResiliencePipeline<HttpResponseMessage> timeoutPipeline =
         new ResiliencePipelineBuilder<HttpResponseMessage>()
-            .AddTimeout(TimeSpan.FromSeconds(5))
+            .AddTimeout(TimeSpan.FromSeconds(30))
             .Build();
 
     protected override Task<HttpResponseMessage> SendAsync(
