@@ -63,6 +63,8 @@ builder.Services
     .AddCookie("External", options =>
     {
         options.Cookie.Name = "Fundoo.External";
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
         options.SlidingExpiration = false;
     })
@@ -79,8 +81,14 @@ builder.Services
             builder.Configuration["Google:ClientSecret"]!;
 
         options.ResponseType = "code";
+        options.ResponseMode = "query";
         options.CallbackPath = "/api/auth/signin-google";
         options.UsePkce = true;
+
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.NonceCookie.SameSite = SameSiteMode.Lax;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 
         options.MapInboundClaims = false;
         options.GetClaimsFromUserInfoEndpoint = true;
@@ -95,6 +103,8 @@ builder.Services
 
         options.Events.OnRedirectToIdentityProvider = context =>
         {
+            context.ProtocolMessage.ResponseMode = "query";
+
             var callbackUrl =
                 builder.Configuration["Google:CallbackUrl"];
 
