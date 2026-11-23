@@ -115,6 +115,25 @@ builder.Services
 
             return Task.CompletedTask;
         };
+
+        options.Events.OnRemoteFailure = async context =>
+        {
+            if (string.IsNullOrEmpty(context.Request.Query["state"]))
+            {
+                context.Response.Redirect("/api/auth/google");
+                context.HandleResponse();
+                return;
+            }
+
+            context.Response.StatusCode = 400;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                error = "Authentication failed",
+                details = context.Failure?.Message
+            });
+            context.HandleResponse();
+        };
     });
 
 builder.Services.AddAuthorization();
