@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Fundoo.Notes.Application;
 using Fundoo.Notes.Domain;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ namespace Fundoo.Notes.Api;
 
 [ApiController]
 [Authorize]
+[ApiVersionNeutral]
 [Route("api/labels")]
 public class LabelsController : ControllerBase
 {

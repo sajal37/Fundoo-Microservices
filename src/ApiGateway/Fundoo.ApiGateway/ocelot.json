@@ -14,6 +14,19 @@
       "SwaggerKey": "user"
     },
     {
+      "DownstreamPathTemplate": "/api/v{version}/notes",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/v{version}/notes",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "SwaggerKey": "notes"
+    },
+    {
       "DownstreamPathTemplate": "/api/v{version}/notes/{everything}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
@@ -23,6 +36,19 @@
         }
       ],
       "UpstreamPathTemplate": "/api/v{version}/notes/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "SwaggerKey": "notes"
+    },
+    {
+      "DownstreamPathTemplate": "/api/labels",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/labels",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "SwaggerKey": "notes"
     },
@@ -38,6 +64,18 @@
       "UpstreamPathTemplate": "/api/labels/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "SwaggerKey": "notes"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/health",
+      "UpstreamHttpMethod": [ "GET" ]
     }
   ],
   "SwaggerEndPoints": [
