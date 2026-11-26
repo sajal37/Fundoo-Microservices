@@ -36,6 +36,10 @@ public class NotesController : ControllerBase
     public Task<List<Note>> GetTrash() =>
         _notes.GetNotesAsync(CurrentUserId(), "trash");
 
+    [HttpGet("shared")]
+    public Task<List<Note>> GetSharedNotes() =>
+        _notes.GetSharedNotesAsync(CurrentUserId());
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetNote(Guid id)
     {
@@ -69,7 +73,7 @@ public class NotesController : ControllerBase
     {
         var note = await _notes.GetNoteAsync(CurrentUserId(), id);
 
-        if (note == null)
+        if (note == null || note.UserId != CurrentUserId())
         {
             return NotFound();
         }
@@ -115,6 +119,31 @@ public class NotesController : ControllerBase
     [HttpDelete("{noteId:guid}/labels/{labelId:guid}")]
     public async Task<IActionResult> RemoveLabel(Guid noteId, Guid labelId) =>
         await _labels.RemoveLabelAsync(CurrentUserId(), noteId, labelId)
+            ? NoContent()
+            : NotFound();
+
+    [HttpGet("{id:guid}/collaborators")]
+    public async Task<IActionResult> GetCollaborators(Guid id)
+    {
+        var note = await _notes.GetNoteAsync(CurrentUserId(), id);
+        if (note == null)
+        {
+            return NotFound();
+        }
+
+        List<Guid> collaborators = await _notes.GetCollaboratorsAsync(CurrentUserId(), id);
+        return Ok(collaborators);
+    }
+
+    [HttpPost("{id:guid}/collaborators")]
+    public async Task<IActionResult> AddCollaborator(Guid id, AddCollaboratorRequest request) =>
+        await _notes.AddCollaboratorAsync(CurrentUserId(), id, request.UserId)
+            ? NoContent()
+            : NotFound();
+
+    [HttpDelete("{id:guid}/collaborators/{collaboratorUserId:guid}")]
+    public async Task<IActionResult> RemoveCollaborator(Guid id, Guid collaboratorUserId) =>
+        await _notes.RemoveCollaboratorAsync(CurrentUserId(), id, collaboratorUserId)
             ? NoContent()
             : NotFound();
 }

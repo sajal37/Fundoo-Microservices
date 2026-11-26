@@ -7,6 +7,10 @@
   <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+  <ProjectReference Include="..\..\src\Services\Notes\Fundoo.Notes.Api\Fundoo.Notes.Api.csproj" />
+  <ProjectReference Include="..\..\src\Services\Notes\Fundoo.Notes.Domain\Fundoo.Notes.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
   <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
   <PackageReference Include="xunit" Version="2.9.2" />
   <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />

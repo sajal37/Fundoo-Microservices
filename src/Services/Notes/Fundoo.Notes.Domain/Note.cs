@@ -12,4 +12,5 @@ public class Note
     public bool IsTrashed { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    public List<Label> Labels { get; set; } = new List<Label>();
 }

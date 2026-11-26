@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Fundoo.Notes.Api;
 
@@ -17,5 +17,13 @@ public class UpdateNoteRequestValidator : AbstractValidator<UpdateNoteRequest>
     {
         RuleFor(x => x.Title).NotEmpty();
         RuleFor(x => x.Content).NotEmpty();
+    }
+}
+
+public class AddCollaboratorRequestValidator : AbstractValidator<AddCollaboratorRequest>
+{
+    public AddCollaboratorRequestValidator()
+    {
+        RuleFor(x => x.UserId).NotEmpty();
     }
 }

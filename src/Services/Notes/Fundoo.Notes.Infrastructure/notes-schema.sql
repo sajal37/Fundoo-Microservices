@@ -25,3 +25,12 @@ CREATE TABLE IF NOT EXISTS note_labels (
     label_id uuid NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
     PRIMARY KEY(note_id, label_id)
 );
+
+CREATE TABLE IF NOT EXISTS note_collaborators (
+    note_id uuid NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL,
+    created_at_utc timestamp with time zone NOT NULL,
+    PRIMARY KEY(note_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_note_collaborators_user_id ON note_collaborators(user_id);
