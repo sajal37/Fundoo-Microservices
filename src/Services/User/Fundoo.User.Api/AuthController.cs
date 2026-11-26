@@ -18,6 +18,7 @@ public class AuthController : ControllerBase
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ITokenService _tokens;
     private readonly IConfiguration _configuration;
+    private readonly KafkaProducerService _kafkaProducer;
 
     public AuthController(
         IAuthService auth,
@@ -25,7 +26,8 @@ public class AuthController : ControllerBase
         IPasswordHasher hasher,
         IHttpClientFactory httpClientFactory,
         ITokenService tokens,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        KafkaProducerService kafkaProducer)
     {
         _auth = auth;
         _users = users;
@@ -33,6 +35,7 @@ public class AuthController : ControllerBase
         _httpClientFactory = httpClientFactory;
         _tokens = tokens;
         _configuration = configuration;
+        _kafkaProducer = kafkaProducer;
     }
 
     [HttpPost("register")]
@@ -239,21 +242,29 @@ public class AuthController : ControllerBase
 
             await _users.SaveAsync();
 
-            var emailMessage = new
+            var subject = "Request for Password Reset";
+            var body = $"Your password reset token is: {rawToken}";
+
+            bool sentViaKafka = await _kafkaProducer.SendEmailAsync(user.Email, subject, body);
+
+            if (!sentViaKafka)
             {
-                Email = user.Email,
-                Subject = "Request for Password Reset",
-                Body = $"Your password reset token is: {rawToken}"
-            };
+                var emailMessage = new
+                {
+                    Email = user.Email,
+                    Subject = subject,
+                    Body = body
+                };
 
-            var emailClient =
-                _httpClientFactory.CreateClient("EmailService");
+                var emailClient =
+                    _httpClientFactory.CreateClient("EmailService");
 
-            var response = await emailClient.PostAsJsonAsync(
-                "api/email/send",
-                emailMessage);
+                var response = await emailClient.PostAsJsonAsync(
+                    "api/email/send",
+                    emailMessage);
 
-            response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
+            }
         }
 
         return Accepted(new
@@ -336,48 +347,56 @@ public class AuthController : ControllerBase
         await _users.AddLoginOtpAsync(otp);
         await _users.SaveAsync();
 
-        var emailClient =
-            _httpClientFactory.CreateClient("EmailService");
+        var subject = "Fundoo login verification code";
+        var body = $"<p>Your Fundoo login code is <strong>{code}</strong>.</p>" +
+                   "<p>This code expires in five minutes. Do not share it.</p>";
 
-        try
+        bool sentViaKafka = await _kafkaProducer.SendEmailAsync(user.Email, subject, body);
+
+        if (!sentViaKafka)
         {
-            using var response = await emailClient.PostAsJsonAsync(
-                "api/email/send",
-                new
-                {
-                    Email = user.Email,
-                    Subject = "Fundoo login verification code",
-                    Body = $"<p>Your Fundoo login code is <strong>{code}</strong>.</p>" +
-                           "<p>This code expires in five minutes. Do not share it.</p>"
-                });
+            var emailClient =
+                _httpClientFactory.CreateClient("EmailService");
 
-            if (!response.IsSuccessStatusCode)
+            try
+            {
+                using var response = await emailClient.PostAsJsonAsync(
+                    "api/email/send",
+                    new
+                    {
+                        Email = user.Email,
+                        Subject = subject,
+                        Body = body
+                    });
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    await _users.InvalidateLoginOtpsAsync(user.Id);
+
+                    return StatusCode(502, new
+                    {
+                        message = "The verification email could not be sent."
+                    });
+                }
+            }
+            catch (HttpRequestException)
             {
                 await _users.InvalidateLoginOtpsAsync(user.Id);
 
                 return StatusCode(502, new
                 {
-                    message = "The verification email could not be sent."
+                    message = "The verification email service is unavailable."
                 });
             }
-        }
-        catch (HttpRequestException)
-        {
-            await _users.InvalidateLoginOtpsAsync(user.Id);
-
-            return StatusCode(502, new
+            catch (TaskCanceledException)
             {
-                message = "The verification email service is unavailable."
-            });
-        }
-        catch (TaskCanceledException)
-        {
-            await _users.InvalidateLoginOtpsAsync(user.Id);
+                await _users.InvalidateLoginOtpsAsync(user.Id);
 
-            return StatusCode(502, new
-            {
-                message = "The verification email service timed out."
-            });
+                return StatusCode(502, new
+                {
+                    message = "The verification email service timed out."
+                });
+            }
         }
 
         return Accepted(new

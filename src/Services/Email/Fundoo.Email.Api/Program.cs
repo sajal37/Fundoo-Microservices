@@ -1,3 +1,4 @@
+using Fundoo.Email.Api;
 using Fundoo.Email.Application;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHostedService<KafkaConsumerService>();
 
 var app = builder.Build();
 app.UseSwagger();

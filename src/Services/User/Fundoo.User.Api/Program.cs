@@ -20,6 +20,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<KafkaProducerService>();
+
 builder.Services.AddUserInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpClient("EmailService", client =>
